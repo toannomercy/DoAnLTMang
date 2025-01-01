@@ -26,7 +26,7 @@ public class SimpleHttpServer {
         // Tạo HTTP Server tại cổng 8080
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
 
-        String baseDirectory = "D:\\WorkSpaces\\LTMang\\Nhom01_DoAnMonLapTrinhMang\\src\\main\\java\\frontend";
+        String baseDirectory = "/Users/justcallmemin/Documents/development/Java/DoAnLTMang/src/main/java/frontend";
 
         // Định nghĩa handler cho các yêu cầu HTTP
         server.createContext("/", new HttpHandler() {

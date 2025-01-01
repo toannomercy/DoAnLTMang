@@ -23,7 +23,7 @@ public class MyConnection {
             // Cấu hình kết nối (tắt SSL)
             String url = "jdbc:mysql://localhost:3306/quanlytaikhoan?useSSL=false";
             String username = "root"; // Tên đăng nhập của MySQL
-            String password = "toan";
+            String password = "Tnhminh33";
             
             // Tạo kết nối
             con = DriverManager.getConnection(url, username, password);

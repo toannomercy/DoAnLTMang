@@ -4,6 +4,9 @@
  */
 package frontend;
 
+import backend.SignalingClient;
+import database.ClientService;
+import database.DBAccess;
 import database.EmployeeService;
 import java.awt.Desktop;
 import java.net.URI;
@@ -15,23 +18,35 @@ import java.util.List;
  *
  * @author htoan
  */
-public class formEmployeeList extends javax.swing.JFrame {
 
+public class formEmployeeList extends javax.swing.JFrame {
+    private String userId;
+    private SignalingClient signalingClient = new SignalingClient();
     /**
      * Creates new form formEmployeeList
      */
-    public formEmployeeList() {
+    public formEmployeeList(String userId) {
+        this.userId = userId; // Gán userId cho biến toàn cục
         initComponents();
         setLocationRelativeTo(null);
         setTitle("Danh sách nhân viên trực tuyến");
+
         // Đặt tiêu đề cột cho JTable
         tblEmployees.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {},
-            new String [] {"ID", "Họ và Tên", "Vai Trò"}
+            new Object[][] {},
+            new String[] {"ID", "Họ và Tên", "Trạng Thái"}
         ));
-        loadEmployeesToTable(); // Nạp dữ liệu vào bảng
-    }
 
+        // Kết nối WebSocket
+        signalingClient.setTableModel((DefaultTableModel) tblEmployees.getModel());
+        signalingClient.connect();
+
+        // Gửi tín hiệu REGISTER với userId thực tế
+        signalingClient.sendMessage("REGISTER " + userId);
+
+        // Tải dữ liệu ban đầu từ cơ sở dữ liệu
+        loadEmployeesToTable();
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -113,29 +128,39 @@ public class formEmployeeList extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private SignalingClient signalingClient = new SignalingClient();
     private void btnCallActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCallActionPerformed
         int selectedRow = tblEmployees.getSelectedRow();
-        if (selectedRow >= 0) {
-            String employeeName = tblEmployees.getValueAt(selectedRow, 1).toString();
-            String employeeId = tblEmployees.getValueAt(selectedRow, 0).toString();
+    if (selectedRow >= 0) {
+        String targetId = tblEmployees.getValueAt(selectedRow, 0).toString(); // ID người nhận
+        try {
+            // Gửi tín hiệu CALL
+            signalingClient.sendMessage("CALL " + targetId + " " + userId);
 
-            try {
-                // URL của file webrtc.html
-                String url = "http://localhost:8080/webrtc.html?employeeId=" + employeeId;
-                Desktop.getDesktop().browse(new URI(url));
-
-                System.out.println("Đang mở trình duyệt và thực hiện cuộc gọi tới: " + employeeName);
-            } catch (Exception e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Không thể mở trình duyệt.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            // Cập nhật trạng thái "Đang gọi" cho bảng
+            DefaultTableModel model = (DefaultTableModel) tblEmployees.getModel();
+            for (int i = 0; i < model.getRowCount(); i++) {
+                if (model.getValueAt(i, 0).toString().equals(userId)) {
+                    model.setValueAt("Đang gọi", i, 2);
+                } else if (model.getValueAt(i, 0).toString().equals(targetId)) {
+                    model.setValueAt("Đang gọi", i, 2);
+                }
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một nhân viên.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+
+            System.out.println("Đang gọi tới: " + targetId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Không thể mở trình duyệt.", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    } else {
+        JOptionPane.showMessageDialog(this, "Vui lòng chọn một tài khoản để gọi!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+    }
     }//GEN-LAST:event_btnCallActionPerformed
 
     private void btnBackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBackActionPerformed
+        // Xóa trạng thái khỏi Map
+        SignalingClient.removeUserStatus(userId);
+
+        // Đóng form hiện tại và quay lại formHome
         this.dispose();
         new formHome().setVisible(true);
     }//GEN-LAST:event_btnBackActionPerformed
@@ -149,12 +174,18 @@ public class formEmployeeList extends javax.swing.JFrame {
         DefaultTableModel model = (DefaultTableModel) tblEmployees.getModel();
         model.setRowCount(0); // Xóa dữ liệu cũ
 
-        // Lấy danh sách nhân viên từ database
-        List<Object[]> employees = EmployeeService.getOnlineEmployees();
-        for (Object[] employee : employees) {
-            model.addRow(employee); // Thêm từng hàng vào bảng
+        // Lấy danh sách tất cả tài khoản ngoại trừ userId hiện tại
+        List<Object[]> accounts = ClientService.getAllAccountsExcept(userId);
+
+        for (Object[] account : accounts) {
+            String accountId = account[0].toString(); // ID tài khoản
+            String username = account[1].toString(); // Tên người dùng
+            String status = SignalingClient.getUserStatus(accountId); // Lấy trạng thái từ Map
+
+            // Thêm tài khoản vào bảng với trạng thái
+            model.addRow(new Object[]{accountId, username, status});
         }
-    }   
+    }
     /**
      * @param args the command line arguments
      */
@@ -185,10 +216,10 @@ public class formEmployeeList extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new formEmployeeList().setVisible(true);
-            }
-        });
+        public void run() {
+            new formLogin().setVisible(true);
+        }
+    });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

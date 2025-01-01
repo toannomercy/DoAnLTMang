@@ -4,6 +4,7 @@
  */
 package frontend;
 
+import backend.SignalingClient;
 import database.DBAccess;
 import javax.swing.JOptionPane;
 import java.sql.*;
@@ -110,39 +111,34 @@ public class formLogin extends javax.swing.JFrame {
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         try {
-        // Lấy thông tin từ các trường nhập liệu
-        String username = txtUName.getText();
-        String password = new String(txtPass.getText());
+                // Lấy thông tin từ các trường nhập liệu
+                String username = txtUName.getText();
+                String password = txtPass.getText();
 
-        // Kiểm tra xem thông tin có bị trống không
-        if (username.trim().isEmpty() || password.trim().isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Tên đăng nhập và mật khẩu không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            return; // Dừng hàm nếu thông tin trống
-        }
+                if (username.trim().isEmpty() || password.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Tên đăng nhập và mật khẩu không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
 
-        // Tạo đối tượng để truy vấn cơ sở dữ liệu
-        DBAccess acc = new DBAccess();
-        ResultSet rs = acc.Query("SELECT * FROM taikhoan WHERE username='" + username + "' AND password='" + password + "'");
+                DBAccess acc = new DBAccess();
+                ResultSet rs = acc.Query("SELECT * FROM taikhoan WHERE username='" + username + "' AND password='" + password + "'");
 
-        // Kiểm tra kết quả truy vấn
-        if (rs.next()) {
-            // Đăng nhập thành công
-            JOptionPane.showMessageDialog(null, "Đăng nhập thành công!", "Chúc mừng", JOptionPane.INFORMATION_MESSAGE);
-            formEmployeeList formEmp = new formEmployeeList();
-            formEmp.setVisible(true);
-            dispose();
-        } else {
-            // Đăng nhập thất bại
-            JOptionPane.showMessageDialog(null, "Đăng nhập thất bại! Vui lòng kiểm tra lại thông tin.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
+                if (rs.next()) {
+                    String userId = rs.getString("id"); // Lấy ID từ ResultSet
+                    JOptionPane.showMessageDialog(null, "Đăng nhập thành công!", "Chúc mừng", JOptionPane.INFORMATION_MESSAGE);
 
-        // Đóng ResultSet
-        rs.close();
-        
-        } catch (Exception e) {
-            // Xử lý lỗi nếu có
-            JOptionPane.showMessageDialog(null, "Lỗi kết nối cơ sở dữ liệu: " + e.getMessage());
-        }
+                    // Cập nhật trạng thái trong bộ nhớ
+                    SignalingClient.updateUserStatus(userId, "online");
+
+                    // Mở formEmployeeList và truyền userId
+                    new formEmployeeList(userId).setVisible(true);
+                    dispose(); // Đóng formLogin
+                }
+
+                rs.close();
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Lỗi kết nối cơ sở dữ liệu: " + e.getMessage());
+            }
     }//GEN-LAST:event_btnLoginActionPerformed
 
     private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed
