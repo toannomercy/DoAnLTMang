@@ -61,6 +61,7 @@ public class formEmployeeList extends javax.swing.JFrame {
         jpane = new javax.swing.JScrollPane();
         tblEmployees = new javax.swing.JTable();
         btnBack = new javax.swing.JButton();
+        btn_listen = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -93,6 +94,13 @@ public class formEmployeeList extends javax.swing.JFrame {
             }
         });
 
+        btn_listen.setText("NGHE");
+        btn_listen.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_listenActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -101,6 +109,8 @@ public class formEmployeeList extends javax.swing.JFrame {
                 .addContainerGap(29, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(btn_listen)
+                        .addGap(18, 18, 18)
                         .addComponent(btnCall)
                         .addGap(18, 18, 18)
                         .addComponent(btnBack))
@@ -118,10 +128,12 @@ public class formEmployeeList extends javax.swing.JFrame {
                 .addComponent(jLabel1)
                 .addGap(18, 18, 18)
                 .addComponent(jpane, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(12, 12, 12)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnCall, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnBack, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(btnCall, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(btnBack, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btn_listen, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(17, Short.MAX_VALUE))
         );
 
@@ -159,6 +171,27 @@ public class formEmployeeList extends javax.swing.JFrame {
         this.dispose();
         new formHome().setVisible(true);
     }//GEN-LAST:event_btnBackActionPerformed
+
+    private void btn_listenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_listenActionPerformed
+        int selectedRow = tblEmployees.getSelectedRow();
+        if (selectedRow >= 0) {
+            String callerId = tblEmployees.getValueAt(selectedRow, 0).toString(); // ID người gọi
+            try {
+                // Gửi tín hiệu ANSWER tới signaling server
+                signalingClient.sendMessage("ANSWER " + callerId + " " + userId);
+                JOptionPane.showMessageDialog(this, "Đã chấp nhận cuộc gọi từ: " + callerId, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+
+                // Mở giao diện WebRTC
+                String url = "http://localhost:8080/webrtc.html?callerId=" + callerId + "&targetId=" + userId;
+                Desktop.getDesktop().browse(new URI(url));
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Không thể thực hiện cuộc gọi.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn người gọi để nhận!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+        }
+    }//GEN-LAST:event_btn_listenActionPerformed
 
     private void startVideoCall(int employeeId, String employeeName) {
         JOptionPane.showMessageDialog(this, "Gửi tín hiệu gọi video tới nhân viên: " + employeeName, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
@@ -220,6 +253,7 @@ public class formEmployeeList extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnBack;
     private javax.swing.JButton btnCall;
+    private javax.swing.JButton btn_listen;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jpane;
     private javax.swing.JTable tblEmployees;

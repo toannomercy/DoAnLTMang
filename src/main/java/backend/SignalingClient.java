@@ -9,6 +9,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 /**
  *
@@ -67,21 +68,38 @@ public class SignalingClient {
     }
 }
 
+//    private void handleIncomingCall(String message) {
+//        String[] parts = message.split(" ");
+//        String callerId = parts[1];
+//
+//        if (tableModel != null) {
+//            javax.swing.SwingUtilities.invokeLater(() -> {
+//                for (int i = 0; i < tableModel.getRowCount(); i++) {
+//                    if (tableModel.getValueAt(i, 0).toString().equals(callerId)) {
+//                        tableModel.setValueAt("Đang gọi", i, 2); // Cập nhật trạng thái
+//                        return;
+//                    }
+//                }
+//            });
+//        }
+//    }
     private void handleIncomingCall(String message) {
         String[] parts = message.split(" ");
         String callerId = parts[1];
 
-        if (tableModel != null) {
-            javax.swing.SwingUtilities.invokeLater(() -> {
-                for (int i = 0; i < tableModel.getRowCount(); i++) {
-                    if (tableModel.getValueAt(i, 0).toString().equals(callerId)) {
-                        tableModel.setValueAt("Đang gọi", i, 2); // Cập nhật trạng thái
-                        return;
-                    }
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            JOptionPane.showMessageDialog(null, "Có cuộc gọi từ: " + callerId, "Cuộc gọi đến", JOptionPane.INFORMATION_MESSAGE);
+
+            DefaultTableModel model = (DefaultTableModel) tableModel;
+            for (int i = 0; i < model.getRowCount(); i++) {
+                if (model.getValueAt(i, 0).toString().equals(callerId)) {
+                    model.setValueAt("Đang gọi", i, 2);
+                    break;
                 }
-            });
-        }
+            }
+        });
     }
+
 
     private void handleAnswer(String message) {
         System.out.println("Answer received: " + message);
