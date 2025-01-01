@@ -23,38 +23,95 @@ public class SignalingServer {
         System.out.println("New connection: " + session.getId());
     }
 
+//    @OnMessage
+//    public void onMessage(String message, Session session) {
+//        System.out.println("Received message from " + session.getId() + ": " + message);
+//
+//        // Phân tích tín hiệu
+//        if (message.startsWith("CALL")) {
+//            String[] parts = message.split(" ");
+//            if (parts.length == 3) {
+//                String targetId = parts[1]; // ID của client đích
+//                String senderId = session.getId();
+//
+//                // Gửi tín hiệu gọi đến client đích
+//                Session targetSession = clients.get(targetId);
+//                if (targetSession != null && targetSession.isOpen()) {
+//                    try {
+//                        String callMessage = "INCOMING_CALL FROM " + senderId;
+//                        targetSession.getBasicRemote().sendText(callMessage);
+//                        System.out.println("Forwarded call from " + senderId + " to " + targetId);
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                } else {
+//                    try {
+//                        session.getBasicRemote().sendText("CALL_FAILED: Client " + targetId + " not available");
+//                        System.out.println("Call failed: Client " + targetId + " not available");
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//        }
+//    }
     @OnMessage
     public void onMessage(String message, Session session) {
         System.out.println("Received message from " + session.getId() + ": " + message);
 
-        // Phân tích tín hiệu
-        if (message.startsWith("CALL")) {
-            String[] parts = message.split(" ");
-            if (parts.length == 3) {
-                String targetId = parts[1]; // ID của client đích
-                String senderId = session.getId();
+        try {
+            // Phân tích tín hiệu
+            if (message.startsWith("CALL")) {
+                String[] parts = message.split(" ");
+                if (parts.length == 3) {
+                    String targetId = parts[1]; // ID của client đích
+                    String senderId = session.getId();
 
-                // Gửi tín hiệu gọi đến client đích
-                Session targetSession = clients.get(targetId);
-                if (targetSession != null && targetSession.isOpen()) {
-                    try {
+                    // Gửi tín hiệu gọi đến client đích
+                    Session targetSession = clients.get(targetId);
+                    if (targetSession != null && targetSession.isOpen()) {
                         String callMessage = "INCOMING_CALL FROM " + senderId;
                         targetSession.getBasicRemote().sendText(callMessage);
                         System.out.println("Forwarded call from " + senderId + " to " + targetId);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    } else {
+                        String failureMessage = "CALL_FAILED: Client " + targetId + " not available";
+                        session.getBasicRemote().sendText(failureMessage);
+                        System.out.println("Call failed: Client " + targetId + " not available");
                     }
                 } else {
-                    try {
-                        session.getBasicRemote().sendText("CALL_FAILED: Client " + targetId + " not available");
-                        System.out.println("Call failed: Client " + targetId + " not available");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    System.out.println("Invalid CALL message format: " + message);
                 }
+            } else if (message.startsWith("ACCEPT_CALL")) {
+                String[] parts = message.split(" ");
+                String callerId = parts[1];
+                Session callerSession = clients.get(callerId);
+
+                if (callerSession != null && callerSession.isOpen()) {
+                    callerSession.getBasicRemote().sendText("CALL_ACCEPTED");
+                    System.out.println("Call accepted by " + session.getId() + ", notified caller: " + callerId);
+                }
+            } else if (message.startsWith("REJECT_CALL")) {
+                String[] parts = message.split(" ");
+                String callerId = parts[1];
+                Session callerSession = clients.get(callerId);
+
+                if (callerSession != null && callerSession.isOpen()) {
+                    callerSession.getBasicRemote().sendText("CALL_REJECTED");
+                    System.out.println("Call rejected by " + session.getId() + ", notified caller: " + callerId);
+                }
+            } else {
+                System.out.println("Unknown message type: " + message);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+                session.getBasicRemote().sendText("ERROR: An internal server error occurred.");
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
             }
         }
     }
+
 
     @OnClose
     public void onClose(Session session) {

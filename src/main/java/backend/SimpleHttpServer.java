@@ -58,7 +58,6 @@ public class SimpleHttpServer {
                     System.err.println("Response: 404 Not Found");
                 }
             }
-
         });
 
         // Khởi chạy server
