@@ -9,6 +9,8 @@ import database.ClientService;
 import database.DBAccess;
 import database.EmployeeService;
 import java.awt.Desktop;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.net.URI;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -26,7 +28,7 @@ public class formEmployeeList extends javax.swing.JFrame {
      * Creates new form formEmployeeList
      */
     public formEmployeeList(String userId) {
-        this.userId = userId; // Gán userId cho biến toàn cục
+        this.userId = userId; 
         initComponents();
         setLocationRelativeTo(null);
         setTitle("Danh sách nhân viên trực tuyến");
@@ -46,6 +48,17 @@ public class formEmployeeList extends javax.swing.JFrame {
 
         // Tải dữ liệu ban đầu từ cơ sở dữ liệu
         loadEmployeesToTable();
+
+        // Xử lý sự kiện đóng form
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                // Gửi tín hiệu STATUS_UPDATE offline trước khi đóng form
+                signalingClient.sendMessage("STATUS_UPDATE " + userId + " offline");
+                signalingClient.disconnect();
+                System.out.println("Đóng form và cập nhật trạng thái offline cho: " + userId);
+            }
+        });
     }
     /**
      * This method is called from within the constructor to initialize the form.
@@ -133,26 +146,27 @@ public class formEmployeeList extends javax.swing.JFrame {
     if (selectedRow >= 0) {
         String targetId = tblEmployees.getValueAt(selectedRow, 0).toString(); // ID người nhận
         try {
-            // Gửi tín hiệu CALL
+            // Gửi tín hiệu CALL tới server signaling
             signalingClient.sendMessage("CALL " + targetId + " " + userId);
-
-            // Cập nhật trạng thái "Đang gọi" cho bảng
-            DefaultTableModel model = (DefaultTableModel) tblEmployees.getModel();
-            for (int i = 0; i < model.getRowCount(); i++) {
-                if (model.getValueAt(i, 0).toString().equals(userId)) {
-                    model.setValueAt("Đang gọi", i, 2);
-                } else if (model.getValueAt(i, 0).toString().equals(targetId)) {
-                    model.setValueAt("Đang gọi", i, 2);
-                }
-            }
-
             System.out.println("Đang gọi tới: " + targetId);
+
+            // Hiển thị trạng thái chờ phản hồi
+            JOptionPane.showMessageDialog(this, 
+                "Đang chờ phản hồi từ: " + targetId, 
+                "Thông báo", 
+                JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Không thể mở trình duyệt.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, 
+                "Không thể gửi tín hiệu gọi.", 
+                "Lỗi", 
+                JOptionPane.ERROR_MESSAGE);
         }
     } else {
-        JOptionPane.showMessageDialog(this, "Vui lòng chọn một tài khoản để gọi!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(this, 
+            "Vui lòng chọn một tài khoản để gọi!", 
+            "Thông báo", 
+            JOptionPane.WARNING_MESSAGE);
     }
     }//GEN-LAST:event_btnCallActionPerformed
 
