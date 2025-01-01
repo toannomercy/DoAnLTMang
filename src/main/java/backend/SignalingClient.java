@@ -28,7 +28,7 @@ public class SignalingClient {
     public void connect() {
         try {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            session = container.connectToServer(this, new URI("ws://localhost:8081/signaling"));
+            session = container.connectToServer(this, new URI("ws://10.147.19.95:8081/signaling"));
             System.out.println("Connected to signaling server");
         } catch (Exception e) {
             e.printStackTrace();

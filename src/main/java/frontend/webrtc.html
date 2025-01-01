@@ -102,8 +102,9 @@
     <div class="video-container">
         <div class="status" id="status">Đang chờ kết nối...</div>
         <div class="videos">
-            <video id="localVideo" autoplay playsinline muted></video>
-            <video id="remoteVideo" autoplay playsinline></video>
+<video id="localVideo" autoplay playsinline muted></video>
+<video id="remoteVideo" autoplay playsinline></video>
+
         </div>
         <div class="controls">
             <button id="startCallButton" title="Bắt đầu cuộc gọi">
@@ -137,7 +138,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const callerId = urlParams.get('callerId');
 const targetId = urlParams.get('targetId');
 
-const signalingServerUrl = "ws://localhost:8081/signaling";
+const signalingServerUrl = "ws://10.147.19.95:8081/signaling";
 
 async function initWebRTC() {
     try {
@@ -146,23 +147,31 @@ async function initWebRTC() {
         localVideo.srcObject = localStream;
 
         // Initialize peer connection
-        peerConnection = new RTCPeerConnection({
+        const peerConnection = new RTCPeerConnection({
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'turn:your-turn-server.com', username: 'user', credential: 'password' } // Replace with actual TURN server details
+                { urls: 'turn:your-turn-server.com', username: 'user', credential: 'password' }
             ]
         });
 
+
         // Add local tracks to the peer connection
-        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+//        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
         // Handle remote tracks
-        peerConnection.ontrack = (event) => {
-            console.log('Remote stream received:', event.streams[0]);
-            if (!remoteVideo.srcObject || remoteVideo.srcObject !== event.streams[0]) {
-                remoteVideo.srcObject = event.streams[0];
-            }
-        };
+//        peerConnection.ontrack = (event) => {
+//            console.log('Remote stream received:', event.streams[0]);
+//            if (!remoteVideo.srcObject || remoteVideo.srcObject !== event.streams[0]) {
+//                remoteVideo.srcObject = event.streams[0];
+//            }
+//        };
+            peerConnection.ontrack = (event) => {
+                if (event.streams && event.streams[0]) {
+                    remoteVideo.srcObject = event.streams[0];
+                    console.log('Remote stream added:', event.streams[0]);
+                }
+            };
 
         // Handle negotiation needed event
         peerConnection.onnegotiationneeded = async () => {
@@ -177,18 +186,36 @@ async function initWebRTC() {
             }));
         };
 
+peerConnection.ontrack = (event) => {
+    if (!remoteVideo.srcObject || remoteVideo.srcObject !== event.streams[0]) {
+        remoteVideo.srcObject = event.streams[0];
+        console.log('Remote stream set to video element');
+    }
+};
+
         // Handle ICE candidate event
+//        peerConnection.onicecandidate = (event) => {
+//            if (event.candidate) {
+//                console.log('Sending ICE candidate:', event.candidate);
+//                signalingSocket.send(JSON.stringify({
+//                    type: "candidate",
+//                    candidate: event.candidate,
+//                    sender: callerId,
+//                    target: targetId
+//                }));
+//            }
+//        };
         peerConnection.onicecandidate = (event) => {
-            if (event.candidate) {
-                console.log('Sending ICE candidate:', event.candidate);
-                signalingSocket.send(JSON.stringify({
-                    type: "candidate",
-                    candidate: event.candidate,
-                    sender: callerId,
-                    target: targetId
-                }));
-            }
-        };
+    if (event.candidate) {
+        signalingSocket.send(JSON.stringify({
+            type: "candidate",
+            candidate: event.candidate,
+            sender: callerId,
+            target: targetId
+        }));
+    }
+};
+
     } catch (error) {
         console.error('Error initializing WebRTC:', error);
     }
