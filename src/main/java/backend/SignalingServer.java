@@ -287,6 +287,51 @@ public class SignalingServer {
             e.printStackTrace();
         }
     }
+//
+//    @OnMessage
+//    public void onMessage(String message, Session session) {
+//        System.out.println("Received message: " + message);
+//
+//        try {
+//            // Luôn đảm bảo tín hiệu từ client phải là JSON
+//            if (message.trim().startsWith("{") && message.trim().endsWith("}")) {
+//                JsonNode jsonNode = objectMapper.readTree(message);
+//                String type = jsonNode.get("type").asText();
+//
+//                switch (type.toLowerCase()) {
+//                    case "register":
+//                        handleRegister(session, jsonNode.get("userId").asText());
+//                        break;
+//                    case "call":
+//                    case "offer":
+//                        handleCall(session, jsonNode);
+//                        break;
+//                    case "answer":
+//                        handleAnswer(session, jsonNode);
+//                        break;
+//                    case "candidate":
+//                        handleCandidate(session, jsonNode);
+//                        break;
+//                    case "status_update":
+//                        handleStatusUpdate(jsonNode);
+//                        break;
+//                    default:
+//                        System.out.println("Unknown JSON command: " + type);
+//                }
+//            } else {
+//                // Nếu tín hiệu không phải JSON -> Gửi lại về client lỗi định dạng
+//                System.out.println("Invalid message format (non-JSON): " + message);
+//                session.getBasicRemote().sendText("{\"type\": \"error\", \"message\": \"Invalid message format\"}");
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            try {
+//                session.getBasicRemote().sendText("{\"type\": \"error\", \"message\": \"Server error: " + e.getMessage() + "\"}");
+//            } catch (Exception sendError) {
+//                sendError.printStackTrace();
+//            }
+//        }
+//    }
 
     private void handleCallNonJson(Session senderSession, String payload) {
         String[] parts = payload.split(" ");

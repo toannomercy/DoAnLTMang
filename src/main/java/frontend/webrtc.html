@@ -232,24 +232,62 @@
 
         signalingSocket = new WebSocket(signalingServerUrl);
 
+//        signalingSocket.onopen = () => {
+//            signalingSocket.send(JSON.stringify({ type: "register", userId: callerId }));
+//        };
+
         signalingSocket.onopen = () => {
-            signalingSocket.send(JSON.stringify({ type: "register", userId: callerId }));
+            signalingSocket.send(JSON.stringify({ type: "register", userId: `${callerId}_${Date.now()}` }));
         };
+
+//        signalingSocket.onmessage = async (event) => {
+//            try {
+//                const message = JSON.parse(event.data);
+//
+//                switch (message.type) {
+//                    case "offer":
+//                        await handleOffer(message.sdp, message.sender);
+//                        break;
+//                    case "answer":
+//                        await handleAnswer(message.sdp);
+//                        break;
+//                    case "candidate":
+//                        handleIceCandidate(message.candidate);
+//                        break;
+//                    default:
+//                        console.warn("Unknown message type:", message.type);
+//                }
+//            } catch (error) {
+//                console.error("Error parsing WebSocket message:", event.data, error);
+//            }
+//        };
 
         signalingSocket.onmessage = async (event) => {
             try {
+                // Kiểm tra xem tin nhắn có phải JSON không
+                if (!event.data.startsWith("{") || !event.data.endsWith("}")) {
+                    console.warn("Non-JSON message received:", event.data);
+                    return;
+                }
+
                 const message = JSON.parse(event.data);
 
                 switch (message.type) {
                     case "offer":
+                        console.log("Received SDP Offer:", message.sdp);
                         await handleOffer(message.sdp, message.sender);
                         break;
+
                     case "answer":
+                        console.log("Received SDP Answer:", message.sdp);
                         await handleAnswer(message.sdp);
                         break;
+
                     case "candidate":
+                        console.log("Received ICE Candidate:", message.candidate);
                         handleIceCandidate(message.candidate);
                         break;
+
                     default:
                         console.warn("Unknown message type:", message.type);
                 }

@@ -6,8 +6,6 @@ package frontend;
 
 import backend.SignalingClient;
 import database.ClientService;
-import database.DBAccess;
-import database.EmployeeService;
 import java.awt.Desktop;
 import java.net.URI;
 import javax.swing.JOptionPane;
@@ -141,18 +139,41 @@ public class formEmployeeList extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCallActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCallActionPerformed
+//        int selectedRow = tblEmployees.getSelectedRow();
+//        if (selectedRow >= 0) {
+//            String targetId = tblEmployees.getValueAt(selectedRow, 0).toString(); // ID người nhận
+//            try {
+//                // URL trỏ đến giao diện gọi WebRTC
+//                String url = "http://localhost:8080/webrtc.html?callerId=" + userId + "&targetId=" + targetId;
+//
+//                // Mở URL trong trình duyệt
+//                Desktop.getDesktop().browse(new URI(url));
+//
+//                // Gửi tín hiệu CALL tới server signaling
+//                signalingClient.sendMessage("CALL " + targetId + " " + userId);
+//                System.out.println("Đang gọi tới: " + targetId);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                JOptionPane.showMessageDialog(this, "Không thể mở trình duyệt.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+//            }
+//        } else {
+//            JOptionPane.showMessageDialog(this, "Vui lòng chọn một tài khoản để gọi!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+//        }
         int selectedRow = tblEmployees.getSelectedRow();
         if (selectedRow >= 0) {
             String targetId = tblEmployees.getValueAt(selectedRow, 0).toString(); // ID người nhận
             try {
                 // URL trỏ đến giao diện gọi WebRTC
-                String url = "http://localhost:8080/webrtc.html?callerId=" + userId + "&targetId=" + targetId;
+                String url = String.format("http://localhost:8080/webrtc.html?callerId=%s&targetId=%s", userId, targetId);
 
                 // Mở URL trong trình duyệt
                 Desktop.getDesktop().browse(new URI(url));
 
                 // Gửi tín hiệu CALL tới server signaling
-                signalingClient.sendMessage("CALL " + targetId + " " + userId);
+                signalingClient.sendMessage(String.format(
+                    "{\"type\": \"CALL\", \"targetId\": \"%s\", \"callerId\": \"%s\"}",
+                    targetId, userId
+                ));
                 System.out.println("Đang gọi tới: " + targetId);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -173,23 +194,44 @@ public class formEmployeeList extends javax.swing.JFrame {
     }//GEN-LAST:event_btnBackActionPerformed
 
     private void btn_listenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_listenActionPerformed
+//        int selectedRow = tblEmployees.getSelectedRow();
+//        if (selectedRow >= 0) {
+//            String callerId = tblEmployees.getValueAt(selectedRow, 0).toString(); // ID người gọi
+//            try {
+//                // Gửi tín hiệu ANSWER tới signaling server
+//                signalingClient.sendMessage("ANSWER " + callerId + " " + userId);
+//                JOptionPane.showMessageDialog(this, "Đã chấp nhận cuộc gọi từ: " + callerId, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+//
+//                // Mở giao diện WebRTC
+//                String url = "http://localhost:8080/webrtc.html?callerId=" + callerId + "&targetId=" + userId;
+//                Desktop.getDesktop().browse(new URI(url));
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                JOptionPane.showMessageDialog(this, "Không thể thực hiện cuộc gọi.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+//            }
+//        } else {
+//            JOptionPane.showMessageDialog(this, "Vui lòng chọn người gọi để nhận!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+//        }
         int selectedRow = tblEmployees.getSelectedRow();
-        if (selectedRow >= 0) {
-            String callerId = tblEmployees.getValueAt(selectedRow, 0).toString(); // ID người gọi
-            try {
-                // Gửi tín hiệu ANSWER tới signaling server
-                signalingClient.sendMessage("ANSWER " + callerId + " " + userId);
-                JOptionPane.showMessageDialog(this, "Đã chấp nhận cuộc gọi từ: " + callerId, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            if (selectedRow >= 0) {
+                String callerId = tblEmployees.getValueAt(selectedRow, 0).toString(); // ID người gọi
+                try {
+                    // Gửi tín hiệu ANSWER tới signaling server
+                    signalingClient.sendMessage(String.format(
+                        "{\"type\": \"ANSWER\", \"callerId\": \"%s\", \"userId\": \"%s\"}",
+                        callerId, userId
+                    ));
+                    JOptionPane.showMessageDialog(this, "Đã chấp nhận cuộc gọi từ: " + callerId, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
 
-                // Mở giao diện WebRTC
-                String url = "http://localhost:8080/webrtc.html?callerId=" + callerId + "&targetId=" + userId;
-                Desktop.getDesktop().browse(new URI(url));
-            } catch (Exception e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Không thể thực hiện cuộc gọi.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        } else {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn người gọi để nhận!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                    // Mở giao diện WebRTC
+                    String url = String.format("http://localhost:8080/webrtc.html?callerId=%s&targetId=%s", callerId, userId);
+                    Desktop.getDesktop().browse(new URI(url));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Không thể thực hiện cuộc gọi.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn người gọi để nhận!", "Thông báo", JOptionPane.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_btn_listenActionPerformed
 
